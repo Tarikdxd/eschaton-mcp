@@ -74,6 +74,26 @@ const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: 'nuclei_scan',
+    description:
+      'Kapsam içindeki bir hedefte nuclei ile şablon tabanlı CVE/misconfiguration taraması yapar.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        target: { type: 'string', description: 'Alan adı veya URL' },
+        templates: { type: 'string', description: 'Mutlak şablon dosyası/dizini' },
+        severity: {
+          type: 'string',
+          description: 'info,low,medium,high,critical (virgülle birden fazla)',
+        },
+        tags: { type: 'string', description: 'Virgülle ayrılmış etiketler' },
+        rate: { type: 'integer', minimum: 1, maximum: 150 },
+      },
+      required: ['target'],
+      additionalProperties: false,
+    },
+  },
 ] as const;
 
 function scopeWithFlags(): Scope {

@@ -2,7 +2,14 @@ import { describe, expect, it, afterAll } from 'bun:test';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildFfufArgs, buildNmapArgs, buildSqlmapArgs, runTool, validatePorts } from '../src/tools.ts';
+import {
+  buildFfufArgs,
+  buildNmapArgs,
+  buildNucleiArgs,
+  buildSqlmapArgs,
+  runTool,
+  validatePorts,
+} from '../src/tools.ts';
 import type { Scope } from '../src/scope.ts';
 
 const scope: Scope = { allowed: ['example.com'], allowPrivate: false };
@@ -69,11 +76,50 @@ describe('buildSqlmapArgs', () => {
   });
 });
 
+describe('buildNucleiArgs', () => {
+  it('kapsam içi hedef için severity/tags/rate üretir', () => {
+    const plan = buildNucleiArgs(
+      { target: 'https://example.com', severity: 'high,critical', tags: 'cve,rce', rate: 25 },
+      scope,
+    );
+    expect(plan.cmd).toBe('nuclei');
+    expect(plan.argv).toContain('-severity');
+    expect(plan.argv).toContain('high,critical');
+    expect(plan.argv).toContain('-tags');
+    expect(plan.argv).toContain('cve,rce');
+    expect(plan.argv).toContain('25');
+  });
+
+  it('kapsam dışı hedefi reddeder', () => {
+    expect(() => buildNucleiArgs({ target: 'https://evil.test' }, scope)).toThrow(/kapsam dışı/);
+  });
+
+  it('geçersiz severity, rate ve göreli şablon yolunu reddeder', () => {
+    expect(() => buildNucleiArgs({ target: 'example.com', severity: 'urgent' }, scope)).toThrow(
+      /severity/,
+    );
+    expect(() => buildNucleiArgs({ target: 'example.com', rate: 0 }, scope)).toThrow(/rate/);
+    expect(() => buildNucleiArgs({ target: 'example.com', templates: 'templates' }, scope)).toThrow(
+      /mutlak/,
+    );
+  });
+});
+
 describe('runTool', () => {
   it('dry-run modunda komut çalıştırmaz, argv yazar', async () => {
     const output = await runTool('nmap_scan', { target: 'example.com', topPorts: 10 }, { scope, dryRun: true });
     expect(output).toStartWith('dry-run: nmap');
     expect(output).toContain('example.com');
+  });
+
+  it('nuclei dry-run modunda komut çalıştırmaz', async () => {
+    const output = await runTool(
+      'nuclei_scan',
+      { target: 'example.com', severity: 'high' },
+      { scope, dryRun: true },
+    );
+    expect(output).toStartWith('dry-run: nuclei');
+    expect(output).toContain('high');
   });
 
   it('bilinmeyen aracı reddeder', async () => {

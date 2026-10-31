@@ -1,6 +1,6 @@
 {
   "name": "eschaton-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Kapsam zorlamalı MCP sunucusu: nmap, httpx, ffuf ve sqlmap için güvenli araç köprüsü.",
   "type": "module",
   "bin": {

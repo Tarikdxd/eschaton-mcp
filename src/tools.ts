@@ -133,6 +133,37 @@ export function buildSqlmapArgs(
   return { cmd: 'sqlmap', argv, timeoutMs: THIRTY_MINUTES };
 }
 
+export function buildNucleiArgs(
+  args: Record<string, unknown>,
+  scope: Scope,
+): { cmd: string; argv: string[]; timeoutMs: number } {
+  const target = text(args, 'target');
+  assertTarget(target, scope);
+
+  const severity = optionalText(args, 'severity');
+  if (severity && !/^(info|low|medium|high|critical)(,(info|low|medium|high|critical))*$/.test(severity)) {
+    throw new Error('severity: info,low,medium,high,critical');
+  }
+
+  const tags = optionalText(args, 'tags');
+  if (tags && !/^[a-zA-Z0-9_,-]+$/.test(tags)) {
+    throw new Error('tags yalnızca harf, rakam, _ ve - içerebilir');
+  }
+
+  const templates = optionalText(args, 'templates');
+  if (templates) {
+    if (!isAbsolute(templates)) throw new Error('templates mutlak bir yol olmalı');
+    if (!existsSync(templates)) throw new Error('templates bulunamadı');
+  }
+
+  const rate = integer(args, 'rate', 1, 150, 50);
+  const argv = ['-u', target, '-silent', '-jsonl', '-no-color', '-rate', String(rate)];
+  if (severity) argv.push('-severity', severity);
+  if (tags) argv.push('-tags', tags);
+  if (templates) argv.push('-t', templates);
+  return { cmd: 'nuclei', argv, timeoutMs: FIFTEEN_MINUTES };
+}
+
 function truncate(value: string): string {
   return value.length <= MAX_OUTPUT ? value : `${value.slice(0, MAX_OUTPUT)}\n… (çıktı kısaltıldı)`;
 }
@@ -143,6 +174,7 @@ export async function toolchainStatus(): Promise<string> {
     { bin: 'httpx', purpose: 'HTTP parmak izi' },
     { bin: 'ffuf', purpose: 'içerik keşfi' },
     { bin: 'sqlmap', purpose: 'SQL enjeksiyonu doğrulama' },
+    { bin: 'nuclei', purpose: 'şablon tabanlı tarama' },
   ];
   const lines: string[] = [];
   for (const tool of tools) {
@@ -166,6 +198,7 @@ export async function runTool(
   else if (name === 'httpx_probe') plan = buildHttpxArgs(args, ctx.scope);
   else if (name === 'ffuf_fuzz') plan = buildFfufArgs(args, ctx.scope);
   else if (name === 'sqlmap_scan') plan = buildSqlmapArgs(args, ctx.scope);
+  else if (name === 'nuclei_scan') plan = buildNucleiArgs(args, ctx.scope);
   else throw new Error(`bilinmeyen araç: ${name}`);
 
   if (ctx.dryRun) {
