@@ -23,7 +23,7 @@ Bu sunucu "her şeyi çalıştıran" bir kabuk değildir:
 ## Gereksinimler
 
 - [Bun](https://bun.sh) 1.2+
-- Kullanmak istediğiniz araçlar `PATH` içinde: `nmap`, `httpx` (ProjectDiscovery), `ffuf`, `sqlmap`
+- Kullanmak istediğiniz araçlar `PATH` içinde: `nmap`, `httpx` (ProjectDiscovery), `ffuf`, `sqlmap`, `nuclei`
 
 ## Kurulum
 
@@ -83,6 +83,7 @@ ESCHATON_MCP_SCOPE=example.com bun src/index.ts
 | `httpx_probe` | `targets` (tek veya 1-20 dizi) | Durum kodu, başlık, teknoloji parmak izi |
 | `ffuf_fuzz` | `url` (FUZZ içerir), `wordlist`, `method?`, `matchCodes?`, `rate?` | İçerik keşfi |
 | `sqlmap_scan` | `url`, `level?` (1-3), `risk?` (1-2), `data?` | SQL enjeksiyonu doğrulama |
+| `nuclei_scan` | `target`, `templates?`, `severity?`, `tags?`, `rate?` | Şablon tabanlı CVE/misconfiguration taraması |
 
 ## Ortam değişkenleri
 
@@ -101,6 +102,7 @@ Komut satırından `--allow-private` bayrağı da kullanılabilir.
 3. `httpx_probe` ile açık HTTP servislerinin başlıklarını topla.
 4. `ffuf_fuzz` ile `https://example.com/FUZZ` ve kendi wordlist'inle içerik keşfi yap.
 5. Şüpheli parametrede `sqlmap_scan` (düşük `level`/`risk` ile başla).
+6. `nuclei_scan` ile `severity: high,critical` ve kendi şablon dizininle CVE taraması yap.
 
 ## Geliştirme
 
